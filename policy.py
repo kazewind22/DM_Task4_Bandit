@@ -11,22 +11,21 @@ class LinUCB():
         self.iter = {} # save for lazy update
         self.invA = {}
         for a in self.articles:
-            self.A[a] = np.eye(12)
-            self.b[a] = np.zeros(12)
+            self.A[a] = np.eye(6)
+            self.b[a] = np.zeros(6)
             self.iter[a] = 0
-            self.invA[a] = np.eye(12)
+            self.invA[a] = np.eye(6)
 
     def UCB(self, user_features, aid):
-        x = np.hstack((user_features, self.articles[aid]))
-        # x = np.array(user_features)
-        # assert len(x) == 12
+        # x = np.hstack((user_features, self.articles[aid]))
+        x = np.array(user_features)
         theta = self.invA[aid].dot(self.b[aid])
         return theta.dot(x) + self.alpha * np.sqrt(x.dot(self.invA[aid].dot(x)))
 
     def recommend(self, time, user_features, choices):
         a = choices[np.argmax([self.UCB(user_features, c) for c in choices])]
-        self.x_t = np.hstack((user_features, self.articles[a]))
-        # self.x_t = np.array(user_features)
+        # self.x_t = np.hstack((user_features, self.articles[a]))
+        self.x_t = np.array(user_features)
         self.a_t = a
         return a
 
@@ -35,11 +34,15 @@ class LinUCB():
         x_t = self.x_t
         self.A[a_t] += np.outer(x_t, x_t)
         # lazy update
-        # self.iter[a_t] += 1
-        # if self.iter[a_t] < 100 or (self.iter[a_t]%100==0):
-            # self.invA[a_t] = np.linalg.inv(self.A[a_t])
-        self.invA[a_t] = np.linalg.inv(self.A[a_t])
-        self.b[a_t] += reward * x_t
+        self.iter[a_t] += 1
+        if self.iter[a_t] < 1000 or (self.iter[a_t]%100==0):
+            self.invA[a_t] = np.linalg.inv(self.A[a_t])
+        # self.invA[a_t] = np.linalg.inv(self.A[a_t])
+        if(reward==1):
+            self.b[a_t] += reward * x_t * 100
+        else:
+            self.b[a_t] += reward * x_t
+
 
 class HybridLinUCB():
     def __init__(self, alpha=0.25):
@@ -104,7 +107,7 @@ class HybridLinUCB():
         self.b0 += reward * z_t - self.B[a_t].T.dot(self.invA[a_t].dot(self.b[a_t]))
 
 
-model = LinUCB()
+model = LinUCB(0.7)
 
 def set_articles(articles):
     model.articles = articles
