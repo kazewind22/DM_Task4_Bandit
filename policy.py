@@ -30,19 +30,23 @@ class LinUCB():
         return a
 
     def update(self, reward):
+        # if(reward==0):
+        #     return
         a_t = self.a_t
         x_t = self.x_t
         self.A[a_t] += np.outer(x_t, x_t)
         # lazy update
         self.iter[a_t] += 1
-        if self.iter[a_t] < 1000 or (self.iter[a_t]%100==0):
+        if self.iter[a_t] < 100000 or (self.iter[a_t]%10000==0):
             self.invA[a_t] = np.linalg.inv(self.A[a_t])
         # self.invA[a_t] = np.linalg.inv(self.A[a_t])
         if(reward==1):
-            self.b[a_t] += reward * x_t * 100
+            reward = 200
+        elif(reward==0):
+            reward = -1
         else:
-            self.b[a_t] += reward * x_t
-
+            reward = 0
+        self.b[a_t] += reward * x_t
 
 class HybridLinUCB():
     def __init__(self, alpha=0.25):
@@ -107,7 +111,7 @@ class HybridLinUCB():
         self.b0 += reward * z_t - self.B[a_t].T.dot(self.invA[a_t].dot(self.b[a_t]))
 
 
-model = LinUCB(0.7)
+model = LinUCB(10)
 
 def set_articles(articles):
     model.articles = articles
